@@ -4,6 +4,7 @@ from pipe import Pipe
 from bird import Bird
 
 pygame.init()
+pygame.mixer.init()
 
 WIDTH, HEIGHT = 1289, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -22,6 +23,16 @@ game_over_font = pygame.font.Font(None, 50)
 
 background = pygame.image.load("background.png").convert()
 background = pygame.transform.scale(background, (screen.get_width(), screen.get_height()))
+
+pygame.mixer.music.load("background.mp3")
+pygame.mixer.music.set_volume(0.3)  # 50% volume
+
+point_sound = pygame.mixer.Sound("point.mp3")
+point_sound.set_volume(0.3)
+
+game_over_sound = pygame.mixer.Sound("game over.mp3")
+game_over_sound.set_volume(0.3)
+
 
 x1 = 0
 x2 = WIDTH
@@ -59,6 +70,7 @@ while running:
         if not game_started:
             game_started = True
             game_active = True
+            pygame.mixer.music.play(loops=-1)
         else :
             bird.flap()
 
@@ -68,7 +80,7 @@ while running:
         if bird.velocity < 0:
             bird_tilt = 10
         elif bird.velocity > 0:
-            bird_tilt = -10
+            bird_tilt = -20
         else:
             bird_tilt = 0
     
@@ -81,11 +93,14 @@ while running:
             if not pipe.scored and bottom_rect.left < bird.rect.left:
                 score += 1
                 pipe.scored = True
+                point_sound.play()
 
             if bird.rect.colliderect(top_rect) or bird.rect.colliderect(bottom_rect):
                 bird.reset(screen.get_width() / 4, screen.get_height() / 2)
                 game_started = False
                 game_active = False
+                pygame.mixer.music.pause()
+                game_over_sound.play()
 
                 for i, pipe in enumerate(pipes):
                     pipe.recycle(screen.get_width() + i * 600)
@@ -102,6 +117,8 @@ while running:
             game_started = False
             game_active = False
             bird.reset(screen.get_width() / 4, screen.get_height() / 2)
+            pygame.mixer.music.pause()
+            game_over_sound.play()
 
             if score > high_score:
                 high_score = score
@@ -128,7 +145,7 @@ while running:
     rotated_rect = bird_rotated.get_rect(center=bird.rect.center)
     screen.blit(bird_rotated, rotated_rect.topleft)
 
-    score_surface = font.render(f"Score: {score}  High Score: {high_score}", True, (255,255,255))
+    score_surface = font.render(f"Score: {score}  High Score: {high_score}", True, (0,0,0))
     score_rect = score_surface.get_rect(center=(200,50))
     screen.blit(score_surface, score_rect)
 
